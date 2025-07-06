@@ -214,3 +214,13 @@ jobs:
         with:
           target: 'http://localhost:3000/'
 
+      - name: Upload OWASP ZAP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-zap-report
+          path: |
+            report_json.json
+            report_md.md
+            report_html.html
+
+
