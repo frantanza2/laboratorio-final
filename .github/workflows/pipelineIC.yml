@@ -69,8 +69,8 @@ jobs:
             "https://sonarcloud.io/api/issues/search?componentKeys=${projectKey}&branch=${branchName}&types=VULNERABILITY&severities=BLOCKER,CRITICAL,MAJOR" \
             | jq '.total')
 
-         echo "Vulnerabilidades críticas/altas/medias encontradas: $issueCount"
-#
+          echo "Vulnerabilidades críticas/altas/medias encontradas: $issueCount"
+
 #          if [ "$issueCount" -gt 0 ]; then
 #            echo "Se encontraron vulnerabilidades críticas, altas o medias. Deteniendo el pipeline..."
 #            exit 1
