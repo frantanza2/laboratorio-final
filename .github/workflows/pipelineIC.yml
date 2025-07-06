@@ -246,6 +246,7 @@ jobs:
 
       - name: Validar resultado de OWASP ZAP
         run: |
+          cd reports
           if [ ! -f report_json.json ]; then
             echo "No se encontró el archivo report_json.json. Falla el análisis DAST."
             exit 1
