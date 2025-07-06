@@ -50,22 +50,34 @@ jobs:
           fi
           set -e
 
-#      - name: Validando tipo de proyecto
-#        run: |
-#          if [ -f "build.gradle" ]
-#          then
-#            if grep -q 'id "org.sonarqube" version "3.3"' build.gradle
-#            then
-#              echo "El plugin de SonarCloud ya está presente en build.gradle"
-#            else
-#              sed -i '/id '\''java'\''/a \ \ \ \ id '\''org.sonarqube'\'' version '\''3.3'\''' build.gradle
-#              echo "Plugin de SonarCloud agregado a build.gradle"
-#              cat build.gradle
-#            fi
-#          else
-#            echo "build.gradle no encontrado. Asegúrate de que el proyecto sea un proyecto Java con Gradle."
-#            exit 1
-#          fi
+      - name: Ejecutar análisis SonarCloud
+        run: |
+          npx sonarqube-scanner \
+            -Dsonar.projectKey=laboratorio-finalv1 \
+            -Dsonar.organization=devsecopsusachfm \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.branch.name=main
+
+      - name: Validando resultado de SonarCloud
+        run: |
+          projectKey="laboratorio-finalv1"
+          branchName="main"
+          
+          issueCount=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+            "https://sonarcloud.io/api/issues/search?componentKeys=${projectKey}&branch=${branchName}&types=VULNERABILITY&severities=BLOCKER,CRITICAL,MAJOR" \
+            | jq '.total')
+
+          echo "Vulnerabilidades críticas/altas/medias encontradas: $issueCount"
+
+          if [ "$issueCount" -gt 0 ]; then
+            echo "Se encontraron vulnerabilidades críticas, altas o medias. Deteniendo el pipeline..."
+            exit 1
+          else
+            echo "No se encontraron vulnerabilidades críticas, altas ni medias. Continuando..."
+          fi
+          # --------------------------------- SCA ---------------------------------
 
 #      - name: Ejecutando SonarCloud
 #        run: |
