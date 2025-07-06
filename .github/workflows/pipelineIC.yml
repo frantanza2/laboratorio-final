@@ -230,6 +230,8 @@ jobs:
           -t http://reddit-clone-yt:3000/ \
           -J report_json.json -w report_md.md -r report_html.html \
           -I
+          echo "Contenidos del workspace luego del escaneo:"
+          ls -la ${{ github.workspace }}
 
       - name: Mover reportes de ZAP al directorio reports
         run: |
