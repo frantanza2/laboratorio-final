@@ -5,7 +5,6 @@ on:
       - feat-sast
 
 jobs:
-  #--------------------------------- SAST ---------------------------------
   SAST:
     runs-on: ubuntu-latest
     steps:
@@ -30,17 +29,15 @@ jobs:
           #pwd
           #ls -R
           set +e
-#          curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{ github.event.repository.name }}' -d 'project=${{ github.event.repository.name }}' -d 'organization=devsecopsusachfm' -d 'visibility=public'
-               curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=laboratorio-finalv1' -d 'project=laboratorio-finalv1' -d 'organization=devsecopsusachfm' -d 'visibility=public'               
-               if [ $? -ne 0 ]; then
-            echo "Proyecto ya existe en Sonarcloud"
-            echo "::set-output name=proyectoExiste::1"
+          curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=laboratorio-finalv1' -d 'project=laboratorio-finalv1' -d 'organization=devsecopsusachfm' -d 'visibility=public'
+          if [ $? -ne 0 ]; then
+          echo "Proyecto ya existe en Sonarcloud"
+          echo "::set-output name=proyectoExiste::1"
           else
-            echo "Proyecto ${{ github.event.repository.name }} creado exitosamente en Sonarcloud"
+          echo "Proyecto laboratorio-finalv1 creado exitosamente en Sonarcloud"
           
-            echo "Se establece rama main como rama por defecto"
-#            curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=${{ github.event.repository.name }}'
-            curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=laboratorio-finalv1'
+          echo "Se establece rama main como rama por defecto"
+          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=laboratorio-finalv1'
           fi
           set -e
 
@@ -61,25 +58,25 @@ jobs:
 #            exit 1
 #          fi
 
-      - name: Ejecutando SonarCloud
-        run: |
-          ./gradlew sonarqube \
-            -Dsonar.projectKey=${{ github.event.repository.name }} \
-            -Dsonar.organization=devsecopsusachfm \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
-            -Dsonar.branch.name=main
-
-      - name: Validando resultado de SonarCloud
-        run: |
-          
-          issueValidate=$(curl -s -X GET -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/issues/search?branch=main&componentKeys=pet-clinic-&facets=severities' | jq '.facets[0].values[1].count')
-          if [ "$issueValidate" -gt 0 ]; then
-            echo "Existen problemas en el código, se detiene el pipeline"
-            #exit 1
-          else
-            echo "No existen problemas en el código, se continúa con el pipeline"
-          fi
+#      - name: Ejecutando SonarCloud
+#        run: |
+#          ./gradlew sonarqube \
+#            -Dsonar.projectKey=${{ github.event.repository.name }} \
+#            -Dsonar.organization=devsecopsusachfm \
+#            -Dsonar.host.url=https://sonarcloud.io \
+#            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+#            -Dsonar.branch.name=main
+#
+#      - name: Validando resultado de SonarCloud
+#        run: |
+#
+#          issueValidate=$(curl -s -X GET -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/issues/search?branch=main&componentKeys=laboratorio-finalv1&facets=severities' | jq '.facets[0].values[1].count')
+#          if [ "$issueValidate" -gt 0 ]; then
+#            echo "Existen problemas en el código, se detiene el pipeline"
+#            #exit 1
+#          else
+#            echo "No existen problemas en el código, se continúa con el pipeline"
+#          fi
 
   #--------------------------------- SCA ---------------------------------
 #  SCA:
@@ -190,7 +187,7 @@ jobs:
 #
 #      - name: Despliegue Aplicacion
 #        run: |
-#          docker run -p 8085:8085 --name pet-clinic-deploy -d b4b4y4g4x/cursodevsecops-test:latest
+#          docker run -p 8085:8085 --name laboratorio-finalv1deploy -d b4b4y4g4x/cursodevsecops-test:latest
 #
 #      - name: Sleep
 #        run: |
