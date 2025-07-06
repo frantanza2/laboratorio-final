@@ -181,10 +181,16 @@ jobs:
         run: |
           docker pull frantanza/usach-devsecops:latest
 
-      - name: Run Trivy Scan
-        uses: aquasecurity/trivy-action@master
+
+      - name: Run Trivy Scan and Save Report
+        run: |
+          trivy image --format table --severity CRITICAL,HIGH,MEDIUM \
+            --exit-code 1 \
+            --output trivy-report.txt \
+            frantanza/usach-devsecops:latest
+
+      - name: Upload Trivy Report
+        uses: actions/upload-artifact@v3
         with:
-          image-ref: frantanza/usach-devsecops:latest
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          name: trivy-report
+          path: trivy-report.txt
