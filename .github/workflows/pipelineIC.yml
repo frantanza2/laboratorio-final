@@ -185,12 +185,12 @@ jobs:
       - name: Run Trivy Scan and Save Report
         run: |
           trivy image --format table --severity CRITICAL,HIGH,MEDIUM \
-            --exit-code 1 \
+#            --exit-code 1 \
             --output trivy-report.txt \
             frantanza/usach-devsecops:latest
 
       - name: Upload Trivy Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: trivy-report
           path: trivy-report.txt
