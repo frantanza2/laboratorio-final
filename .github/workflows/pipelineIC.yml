@@ -5,10 +5,198 @@ on:
       - feat-sast
 
 jobs:
+  #--------------------------------- SAST ---------------------------------
   SAST:
     runs-on: ubuntu-latest
     steps:
-      - name: Hola mundo
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: build
         run: |
-          echo "Hola mundo desde el pipeline de SAST"
-            echo "Este es un ejemplo de pipeline de SAST"
+          chmod 777 gradlew
+          #./gradlew build
+
+      - name: Validando existencia de proyecto en SonarCloud
+        id: validateProjectOnSonar
+        run: |
+          #pwd
+          #ls -R
+          set +e
+#          curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{ github.event.repository.name }}' -d 'project=${{ github.event.repository.name }}' -d 'organization=devsecopsusachfm' -d 'visibility=public'
+               curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=laboratorio-finalv1' -d 'project=laboratorio-finalv1' -d 'organization=devsecopsusachfm' -d 'visibility=public'               
+               if [ $? -ne 0 ]; then
+            echo "Proyecto ya existe en Sonarcloud"
+            echo "::set-output name=proyectoExiste::1"
+          else
+            echo "Proyecto ${{ github.event.repository.name }} creado exitosamente en Sonarcloud"
+          
+            echo "Se establece rama main como rama por defecto"
+#            curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=${{ github.event.repository.name }}'
+            curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=laboratorio-finalv1'
+          fi
+          set -e
+
+#      - name: Validando tipo de proyecto
+#        run: |
+#          if [ -f "build.gradle" ]
+#          then
+#            if grep -q 'id "org.sonarqube" version "3.3"' build.gradle
+#            then
+#              echo "El plugin de SonarCloud ya está presente en build.gradle"
+#            else
+#              sed -i '/id '\''java'\''/a \ \ \ \ id '\''org.sonarqube'\'' version '\''3.3'\''' build.gradle
+#              echo "Plugin de SonarCloud agregado a build.gradle"
+#              cat build.gradle
+#            fi
+#          else
+#            echo "build.gradle no encontrado. Asegúrate de que el proyecto sea un proyecto Java con Gradle."
+#            exit 1
+#          fi
+
+      - name: Ejecutando SonarCloud
+        run: |
+          ./gradlew sonarqube \
+            -Dsonar.projectKey=${{ github.event.repository.name }} \
+            -Dsonar.organization=devsecopsusachfm \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.branch.name=main
+
+      - name: Validando resultado de SonarCloud
+        run: |
+          
+          issueValidate=$(curl -s -X GET -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/issues/search?branch=main&componentKeys=pet-clinic-&facets=severities' | jq '.facets[0].values[1].count')
+          if [ "$issueValidate" -gt 0 ]; then
+            echo "Existen problemas en el código, se detiene el pipeline"
+            #exit 1
+          else
+            echo "No existen problemas en el código, se continúa con el pipeline"
+          fi
+
+  #--------------------------------- SCA ---------------------------------
+#  SCA:
+#    needs: SAST
+#    runs-on: ubuntu-latest
+#    steps:
+#
+#      - name: Checkout code
+#        uses: actions/checkout@v2
+#
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v2
+#        with:
+#          java-version: '17'
+#          distribution: 'adopt'
+#
+#      - name: build
+#        run: |
+#          chmod 777 gradlew
+#          ./gradlew build
+
+      #- name: Dependency Check
+      #  uses: dependency-check/Dependency-Check_Action@1.1.0
+      #  env:
+      #    JAVA_HOME: /opt/jdk
+      #  with:
+      #    project: '${{ github.event.repository.name }}'
+      #    path: '.'
+      #    format: 'HTML'
+      #    out: 'reports'
+      #    args: >
+      #      --failOnCVSS 7
+      #      --enableRetired
+      #
+      #- name: Upload Dependency Check Report
+      #  uses: actions/upload-artifact@master
+      #  with:
+      #    name: dependency-check-report
+      #    path: ${{github.workspace}}/reports
+
+#      - name: Upload JAR
+#        uses: actions/upload-artifact@master
+#        with:
+#          name: JAR
+#          path: ${{github.workspace}}/build/libs/spring-petclinic-2.6.0.jar
+
+  #--------------------------------- DockerBuild --------------------------
+#  DockerBuild:
+#    needs: SCA
+#    runs-on: ubuntu-latest
+#    steps:
+#
+#      - name: Checkout code
+#        uses: actions/checkout@v2
+#
+#      - name: Download JAR
+#        uses: actions/download-artifact@master
+#        with:
+#          name: JAR
+#          path: ${{github.workspace}}
+#
+#      - name: Build Docker Image
+#        run: |
+#          docker build --tag b4b4y4g4x/cursodevsecops-test:latest .
+#
+#      - name: Docker Login
+#        uses: docker/login-action@v3.0.0
+#        with:
+#          username: ${{ secrets.DOCKER_USER }}
+#          password: ${{ secrets.DOCKER_PASSWORD }}
+#
+#      - name: Push Docker Image
+#        run: |
+#          docker push b4b4y4g4x/cursodevsecops-test:latest
+#
+#  #-------------------------------- Docker Scan --------------------------
+#  DockerScan:
+#    needs: DockerBuild
+#    runs-on: ubuntu-latest
+#    steps:
+#
+#      - name: Docker Login
+#        uses: docker/login-action@v3.0.0
+#        with:
+#          username: ${{ secrets.DOCKER_USER }}
+#          password: ${{ secrets.DOCKER_PASSWORD }}
+#
+#      - name: Docker Pull
+#        run: |
+#          docker pull b4b4y4g4x/cursodevsecops-test:latest
+#
+#      - name: Run Trivy Scan
+#        uses: aquasecurity/trivy-action@master
+#        with:
+#          image-ref: b4b4y4g4x/cursodevsecops-test:latest
+#          format: 'table'
+#
+#      - name: Push Docker Image
+#        run: |
+#          docker push b4b4y4g4x/cursodevsecops-test:latest
+#
+#  # --------------------------------- DAST ---------------------------------
+#
+#  DAST:
+#    needs: DockerScan
+#    runs-on: self-hosted
+#    steps:
+#
+#      - name: Despliegue Aplicacion
+#        run: |
+#          docker run -p 8085:8085 --name pet-clinic-deploy -d b4b4y4g4x/cursodevsecops-test:latest
+#
+#      - name: Sleep
+#        run: |
+#          sleep 30
+#
+#      - name: OWASP ZAP Scan
+#        uses: zaproxy/action-baseline@v0.11.0
+#        with:
+#          target: 'http://localhost:8085/'
