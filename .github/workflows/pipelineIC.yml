@@ -234,6 +234,8 @@ jobs:
       - name: Mover reportes de ZAP al directorio reports
         run: |
           mkdir -p reports
+          echo "Archivos actuales en workspace:"
+          ls -la
           mv report_*.json reports/ || true
           mv report_*.md reports/ || true
           mv report_*.html reports/ || true
@@ -246,14 +248,13 @@ jobs:
 
       - name: Validar resultado de OWASP ZAP
         run: |
-          cd reports
-          if [ ! -f report_json.json ]; then
+          if [ ! -f "${{ github.workspace }}/reports/report_json.json" ]; then
             echo "No se encontró el archivo report_json.json. Falla el análisis DAST."
             exit 1
           fi
 
-          highAlerts=$(jq '[.site[].alerts[] | select(.riskdesc | test("High"))] | length' report_json.json)
-          mediumAlerts=$(jq '[.site[].alerts[] | select(.riskdesc | test("Medium"))] | length' report_json.json)
+          highAlerts=$(jq '[.site[].alerts[] | select(.riskdesc | test("High"))] | length' "${{ github.workspace }}/reports/report_json.json")
+          mediumAlerts=$(jq '[.site[].alerts[] | select(.riskdesc | test("Medium"))] | length' "${{ github.workspace }}/reports/report_json.json")
 
           echo "Alertas High: $highAlerts"
           echo "Alertas Medium: $mediumAlerts"
